@@ -530,7 +530,7 @@ $.TokenList = function (input, url_or_data, settings) {
             token_list.children().each(function () {
                 var existing_token = $(this);
                 var existing_data = $.data(existing_token.get(0), "tokeninput");
-                if(existing_data && existing_data.id === item.id) {
+                if(existing_data && catch_data_value(existing_data) === catch_data_value(item)) {
                     found_existing_token = existing_token;
                     return false;
                 }
@@ -652,14 +652,17 @@ $.TokenList = function (input, url_or_data, settings) {
     // Update the hidden input box value
     function update_hidden_input(saved_tokens, hidden_input) {
         var token_values = $.map(saved_tokens, function (el) {
-            if(typeof settings.tokenValue == 'function')
-              return settings.tokenValue.call(this, el);
-            
-            return el[settings.tokenValue];
+            return catch_data_value(el);
         });
         hidden_input.val(token_values.join(settings.tokenDelimiter));
 
     }
+    // Catch data value
+    function catch_data_value(data) {
+    	if(typeof settings.tokenValue == 'function')
+    		return settings.tokenValue.call(this, data);
+    	return data[settings.tokenValue];
+	}
 
     // Hide and clear the results dropdown
     function hide_dropdown () {
@@ -720,8 +723,16 @@ $.TokenList = function (input, url_or_data, settings) {
 
             $.each(results, function(index, value) {
                 var this_li = settings.resultsFormatter(value);
-
-                this_li = find_value_and_highlight_term(this_li ,value[settings.propertyToSearch], query);
+            	var v="";
+                if(typeof settings.propertyToSearch == 'function')
+                {
+                  v=settings.propertyToSearch.call(this, value);
+                }
+                else
+                {
+            		v=value[settings.propertyToSearch];
+                }
+    			this_li = find_value_and_highlight_term(this_li ,v, query);
 
                 this_li = $(this_li).appendTo(dropdown_ul);
 
